@@ -27,7 +27,7 @@ USD price is derived on creation from the daily exchange rate published by the
 
 ```bash
 git clone <repository-url>
-cd ingemark-interview-project
+cd Product-Spring-Boot-App
 ```
 
 ### 2. Start PostgreSQL
@@ -56,6 +56,8 @@ cd demo
 ```
 
 On Windows use `mvnw.cmd spring-boot:run`.
+
+Info: If "Permission denied" error shows, run `chmod +x mvnw` in the `demo` directory.
 
 The service starts on <http://localhost:8080>.
 
