@@ -2,6 +2,7 @@ package com.project.demo.exceptionhandler;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -33,7 +34,17 @@ public class GlobalExceptionHandler {
 
         HashMap<String,String> errorMap = new HashMap<>();
         String errorMessage = error.getMessage();
-        errorMap.put("DataIntegrityViolationException",errorMessage);
+        errorMap.put("DataIntegrityViolationException", errorMessage);
+        return errorMap;
+    }
+
+    @ExceptionHandler(value={ResourceNotFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleException(ResourceNotFoundException error) {
+
+        HashMap<String,String> errorMap = new HashMap<>();
+        String errorMessage = error.getMessage();
+        errorMap.put("Resource not found error", errorMessage);
         return errorMap;
     }
 

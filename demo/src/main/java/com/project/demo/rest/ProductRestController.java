@@ -5,17 +5,19 @@ import com.project.demo.service.ProductService;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Covered By ProductRestControllerTest.
+ */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/products")
 @Validated
 public class ProductRestController {
 
@@ -26,38 +28,45 @@ public class ProductRestController {
         this.productService = productService;
     }
 
-    // add an init binder to trim input strings
-    @InitBinder
-    public void initBinder(WebDataBinder dataBinder) {
-        StringTrimmerEditor stringTrimmerEditor = new StringTrimmerEditor(true);
-        dataBinder.registerCustomEditor(String.class, stringTrimmerEditor);
-    }
-
     // expose "/products" and get list of products
-    @GetMapping("/products")
+    @GetMapping()
     public List<Product> findAllProducts(){
         return productService.findAll();
     }
 
-    @GetMapping("/products/{code}")
-    public Product findProductByCode(@PathVariable String code){
+    /**
+     * Returns product for given code
+     * @param code unique 10-character code of the product
+     * @throws ResourceNotFoundException if there is no product for given code
+     */
+    @GetMapping("{code}")
+    public Product findProductByCode(@PathVariable String code) throws ResourceNotFoundException {
+
         Product product = productService.findByCode(code);
 
         if (product == null){
-            throw new ResourceNotFoundException("Product not found, code:" + code);
+            throw new ResourceNotFoundException("Product not found, code: " + code);
         }
-        System.out.println("Product: " + product);
         return product;
     }
 
+    // expose "/available" and get list of all available products
     @GetMapping("/available")
     public List<Product> findAllAvailableProducts(){
         return productService.findAvailable();
     }
 
-    @PostMapping("/products")
+    /**
+     * Saves new product.
+     * @param product product to be saved without saved set id and without save price_usd
+     * @param result errors from validations
+     * @return saved product
+     * @throws BadRequestException thrown if validations are not passed
+     */
+    @PostMapping()
+    @ResponseStatus(HttpStatus.CREATED)
     public Product save(@RequestBody @Valid Product product,
-                        BindingResult result) throws Exception {
+                        BindingResult result) throws BadRequestException {
 
         Product savedProduct = productService.save(product);
 

@@ -13,23 +13,26 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
-import java.util.zip.DataFormatException;
 
 public class CurrencyConverter {
 
     private static final String HNB_API_URL = "https://api.hnb.hr/tecajn-eur/v3?valuta=USD";
 
-    public BigDecimal convertEURtoUSD(BigDecimal priceEUR) throws DataFormatException {
-        Currency usdData = getUSDData();
+    /**
+     * Returns price in USD converted from EUR using the average conversion rate from HNB API.
+     * @param priceEUR price in EUR to be converted in USD
+     */
+    public static BigDecimal convertEURtoUSD(BigDecimal priceEUR) {
+        CurrencyData usdData = getUSDData();
         BigDecimal averageRate = new BigDecimal(usdData.getAverageRate().replace(",", "."));
         return priceEUR.multiply(averageRate).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
-     * Returns USD currency data from the HNB_API_URL.
-     * @return Currency object with data from the HNB_API_URL
+     * Returns USD currency data from the <a href="https://api.hnb.hr/tecajn-eur/v3?valuta=USD">HNB API</a>.
+     *
      */
-    private static Currency getUSDData() {
+    public static CurrencyData getUSDData() {
 
         HttpRequest getRequest = HttpRequest.newBuilder(URI.create(HNB_API_URL)).build();
         HttpResponse<String> getResponse;
@@ -41,8 +44,8 @@ public class CurrencyConverter {
         }
 
         Gson gson = new Gson();
-        Type currencyListType = new TypeToken<List<Currency>>() {}.getType();
-        List<Currency> usdDataList = gson.fromJson(getResponse.body(), currencyListType);
+        Type currencyListType = new TypeToken<List<CurrencyData>>() {}.getType();
+        List<CurrencyData> usdDataList = gson.fromJson(getResponse.body(), currencyListType);
 
         return usdDataList.getFirst();
     }

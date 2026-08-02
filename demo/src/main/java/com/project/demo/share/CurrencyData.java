@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class Currency {
+public class CurrencyData {
 
     @SerializedName("broj_tecajnice")
     private String exchangeRateCode;

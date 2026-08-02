@@ -12,7 +12,6 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductDAO productDAO;
-    private final CurrencyConverter currencyConverter = new CurrencyConverter();
 
     public ProductServiceImpl(ProductDAO productDAO) {
         this.productDAO = productDAO;
@@ -34,10 +33,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product save(Product product) throws Exception {
+    public Product save(Product product) {
 
         BigDecimal priceEUR = product.getPriceEUR();
-        BigDecimal priceUSD = currencyConverter.convertEURtoUSD(priceEUR);
+        BigDecimal priceUSD = CurrencyConverter.convertEURtoUSD(priceEUR);
         product.setPriceUSD(priceUSD);
 
         return productDAO.save(product);
