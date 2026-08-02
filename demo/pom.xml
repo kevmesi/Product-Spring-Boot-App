@@ -11,23 +11,10 @@
 	<groupId>com.project</groupId>
 	<artifactId>demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>product-service</name>
+	<description>REST service for managing products, with USD prices derived from the HNB exchange rate API</description>
 	<properties>
-		<java.version>26</java.version>
+		<java.version>21</java.version>
 	</properties>
 	<dependencies>
 
@@ -59,6 +46,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-restclient</artifactId>
 		</dependency>
 
 		<dependency>
@@ -106,14 +98,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Source: https://mvnrepository.com/artifact/com.google.code.gson/gson -->
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>2.14.0</version>
-			<scope>compile</scope>
-		</dependency>
-
 		<!-- Source: https://mvnrepository.com/artifact/org.mockito/mockito-core -->
 		<dependency>
 			<groupId>org.mockito</groupId>
@@ -130,26 +114,30 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-		<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-dependency-plugin</artifactId>
-			<version>${maven-dependency-plugin.version}</version>
-			<executions>
-				<execution>
-					<goals>
-						<goal>properties</goal>
-					</goals>
-				</execution>
-			</executions>
-		</plugin>
-		<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-surefire-plugin</artifactId>
-			<version>${maven-surefire-plugin.version}</version>
-			<configuration>
-				<argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
-			</configuration>
-		</plugin>
+			<!-- Exposes dependency paths as properties, so the Mockito agent
+			     can be referenced by coordinates below -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>${maven-dependency-plugin.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>properties</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Mockito 5.23 requires being loaded as an agent explicitly, rather
+			     than self-attaching at runtime -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${maven-surefire-plugin.version}</version>
+				<configuration>
+					<argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

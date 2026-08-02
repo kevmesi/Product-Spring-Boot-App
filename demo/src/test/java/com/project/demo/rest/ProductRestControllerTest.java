@@ -9,12 +9,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.validation.BindingResult;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,9 +25,6 @@ class ProductRestControllerTest {
 
     @MockitoBean
     private ProductService mockService;
-
-    @MockitoBean
-    private ObjectMapper objectMapper;
 
     @Test
     void findAllProducts_SuccessfulCall() throws Exception {
@@ -87,6 +82,47 @@ class ProductRestControllerTest {
                         .content(mockContent)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
+
+    }
+
+    @Test
+    void save_InvalidCodeIsRejectedBeforeReachingTheService() throws Exception {
+
+        // "short" is not the required 10 alphanumeric characters
+        String invalidContent = """
+                {
+                    "code": "short",
+                    "name": "some name",
+                    "price_eur": 1.00,
+                    "is_available": false
+                }""";
+
+        mockMvc.perform(post("/api/products")
+                        .content(invalidContent)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        // An invalid product must never be persisted
+        verify(mockService, never()).save(any(Product.class));
+
+    }
+
+    @Test
+    void save_MissingPriceEurIsRejectedBeforeReachingTheService() throws Exception {
+
+        String invalidContent = """
+                {
+                    "code": "firstcode1",
+                    "name": "some name",
+                    "is_available": false
+                }""";
+
+        mockMvc.perform(post("/api/products")
+                        .content(invalidContent)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verify(mockService, never()).save(any(Product.class));
 
     }
 

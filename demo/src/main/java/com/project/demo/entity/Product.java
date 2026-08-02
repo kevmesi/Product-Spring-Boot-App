@@ -27,9 +27,10 @@ public class Product {
     @Column(name="name")
     private String name;
 
-    @Column(name="price_eur")
+    @Column(name="price_eur", nullable=false)
     @JsonProperty(value="price_eur")
-    @PositiveOrZero
+    @NotNull(message = "Price in EUR must not be null")
+    @PositiveOrZero(message = "Price in EUR must not be negative")
     private BigDecimal priceEUR;
 
     @Column(name="price_usd")

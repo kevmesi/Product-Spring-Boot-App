@@ -3,11 +3,9 @@ package com.project.demo.rest;
 import com.project.demo.entity.Product;
 import com.project.demo.service.ProductService;
 import jakarta.validation.Valid;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,21 +57,11 @@ public class ProductRestController {
     /**
      * Saves new product.
      * @param product product to be saved without saved set id and without save price_usd
-     * @param result errors from validations
      * @return saved product
-     * @throws BadRequestException thrown if validations are not passed
      */
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public Product save(@RequestBody @Valid Product product,
-                        BindingResult result) throws BadRequestException {
-
-        Product savedProduct = productService.save(product);
-
-        if (result.hasErrors()){
-            throw new BadRequestException(result.getAllErrors().getFirst().getDefaultMessage());
-        }
-
-        return savedProduct;
+    public Product save(@RequestBody @Valid Product product) {
+        return productService.save(product);
     }
 }

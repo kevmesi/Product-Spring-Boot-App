@@ -1,54 +1,121 @@
 package com.project.demo.share;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@SpringBootTest
-@ExtendWith(MockitoExtension.class)
-public class CurrencyConverterTests {
+/**
+ * The HNB response is stubbed, so these tests exercise the real JSON mapping,
+ * the real comma-to-dot rate handling, and the real rounding without a network call.
+ */
+class CurrencyConverterTests {
+
+    private static final String BASE_URL = "https://api.hnb.hr/tecajn-eur/v3";
+    private static final String EXPECTED_URL = BASE_URL + "?valuta=USD";
+
+    // Data fetched from the HNB API on date 2026-08-02
+    private static final String HNB_USD_RESPONSE = """
+            [{
+              "broj_tecajnice": "148",
+              "datum_primjene": "2026-08-02",
+              "drzava": "SAD",
+              "drzava_iso": "USA",
+              "kupovni_tecaj": "1,159300",
+              "prodajni_tecaj": "1,162200",
+              "sifra_valute": "840",
+              "srednji_tecaj": "1,160750",
+              "valuta": "USD"
+            }]""";
+
+    private MockRestServiceServer mockServer;
+    private CurrencyConverter currencyConverter;
+
+    @BeforeEach
+    void setUp() {
+        RestClient.Builder builder = RestClient.builder();
+        mockServer = MockRestServiceServer.bindTo(builder).build();
+        currencyConverter = new CurrencyConverter(builder, BASE_URL);
+    }
+
+    @Test
+    void getUSDData_ReturnsCurrencyData() {
+
+        mockServer.expect(requestTo(EXPECTED_URL))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(HNB_USD_RESPONSE, MediaType.APPLICATION_JSON));
+
+        CurrencyData usdData = currencyConverter.getUSDData();
+
+        assertEquals("USD", usdData.getCurrency());
+        assertEquals("840", usdData.getCurrencyCode());
+        assertEquals("SAD", usdData.getCountry());
+        assertEquals("USA", usdData.getCountryCode());
+        assertEquals("1,160750", usdData.getAverageRate());
+        assertEquals(LocalDate.of(2026, 8, 2), usdData.getDateFrom());
+        mockServer.verify();
+    }
 
     @Test
     void convertEURtoUSD_ReturnsConvertedPrice() {
 
-        BigDecimal mockedPriceEUR = mock(BigDecimal.class);
-        CurrencyData mockedCurrencyData = mock(CurrencyData.class);
+        mockServer.expect(requestTo(EXPECTED_URL))
+                .andRespond(withSuccess(HNB_USD_RESPONSE, MediaType.APPLICATION_JSON));
 
-        try (MockedStatic<CurrencyConverter> mockedStatic = mockStatic(CurrencyConverter.class, RETURNS_MOCKS)) {
-            mockedStatic.when(CurrencyConverter::getUSDData).thenReturn(mockedCurrencyData);
-
-            BigDecimal priceUSD = CurrencyConverter.convertEURtoUSD(mockedPriceEUR);
-            assertNotNull(priceUSD);
-            assertNotEquals(priceUSD, mockedPriceEUR);
-        }
-
+        // 100.00 * 1.160750 = 116.0750, rounded HALF_UP to two decimals
+        assertEquals(new BigDecimal("116.08"),
+                currencyConverter.convertEURtoUSD(new BigDecimal("100.00")));
+        mockServer.verify();
     }
 
     @Test
-    void getUSDData_ReturnsCurrencyData(){
+    void convertEURtoUSD_RoundsHalfUpToTwoDecimals() {
 
-        // Expected data
-        String currency = "USD";
-        String currencyCode = "840";
-        String country = "SAD";
-        String countryCode = "USA";
+        mockServer.expect(requestTo(EXPECTED_URL))
+                .andRespond(withSuccess(HNB_USD_RESPONSE, MediaType.APPLICATION_JSON));
 
-        // Real data
-        CurrencyData USDData = CurrencyConverter.getUSDData();
+        // 0.01 * 1.160750 = 0.01160750, rounded HALF_UP to two decimals
+        assertEquals(new BigDecimal("0.01"),
+                currencyConverter.convertEURtoUSD(new BigDecimal("0.01")));
+    }
 
-        // Assertions
-        assertEquals(currency, USDData.getCurrency());
-        assertEquals(currencyCode, USDData.getCurrencyCode());
-        assertEquals(country, USDData.getCountry());
-        assertEquals(countryCode, USDData.getCountryCode());
+    @Test
+    void convertEURtoUSD_ZeroStaysZero() {
 
+        mockServer.expect(requestTo(EXPECTED_URL))
+                .andRespond(withSuccess(HNB_USD_RESPONSE, MediaType.APPLICATION_JSON));
+
+        assertEquals(new BigDecimal("0.00"),
+                currencyConverter.convertEURtoUSD(BigDecimal.ZERO));
+    }
+
+    @Test
+    void getUSDData_ThrowsWhenApiReturnsEmptyList() {
+
+        mockServer.expect(requestTo(EXPECTED_URL))
+                .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+
+        assertThrows(IllegalStateException.class, () -> currencyConverter.getUSDData());
+    }
+
+    @Test
+    void getUSDData_PropagatesApiFailure() {
+
+        mockServer.expect(requestTo(EXPECTED_URL)).andRespond(withServerError());
+
+        assertThrows(RuntimeException.class, () -> currencyConverter.getUSDData());
     }
 
 }

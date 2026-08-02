@@ -1,51 +1,53 @@
 package com.project.demo.share;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 
+/**
+ * Client for the <a href="https://api.hnb.hr/tecajn-eur/v3?valuta=USD">HNB API</a>.
+ *
+ * <p>Covered by CurrencyConverterTests.
+ */
+@Component
 public class CurrencyConverter {
 
-    private static final String HNB_API_URL = "https://api.hnb.hr/tecajn-eur/v3?valuta=USD";
+    private final RestClient restClient;
+
+    public CurrencyConverter(RestClient.Builder restClientBuilder,
+                             @Value("${hnb.api.url}") String baseUrl) {
+        this.restClient = restClientBuilder.baseUrl(baseUrl).build();
+    }
 
     /**
      * Returns price in USD converted from EUR using the average conversion rate from HNB API.
      * @param priceEUR price in EUR to be converted in USD
      */
-    public static BigDecimal convertEURtoUSD(BigDecimal priceEUR) {
-        CurrencyData usdData = getUSDData();
-        BigDecimal averageRate = new BigDecimal(usdData.getAverageRate().replace(",", "."));
+    public BigDecimal convertEURtoUSD(BigDecimal priceEUR) {
+        BigDecimal averageRate = new BigDecimal(getUSDData().getAverageRate().replace(",", "."));
         return priceEUR.multiply(averageRate).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
-     * Returns USD currency data from the <a href="https://api.hnb.hr/tecajn-eur/v3?valuta=USD">HNB API</a>.
-     *
+     * Returns USD currency data from the HNB API.
+     * @throws IllegalStateException if the API returns no rate for USD
      */
-    public static CurrencyData getUSDData() {
+    public CurrencyData getUSDData() {
 
-        HttpRequest getRequest = HttpRequest.newBuilder(URI.create(HNB_API_URL)).build();
-        HttpResponse<String> getResponse;
+        List<CurrencyData> usdDataList = restClient.get()
+                .uri(uriBuilder -> uriBuilder.queryParam("valuta", "USD").build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
 
-        try (HttpClient httpClient = HttpClient.newHttpClient()) {
-            getResponse = httpClient.send(getRequest, BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+        if (usdDataList == null || usdDataList.isEmpty()) {
+            throw new IllegalStateException("HNB API returned no exchange rate for USD");
         }
-
-        Gson gson = new Gson();
-        Type currencyListType = new TypeToken<List<CurrencyData>>() {}.getType();
-        List<CurrencyData> usdDataList = gson.fromJson(getResponse.body(), currencyListType);
 
         return usdDataList.getFirst();
     }

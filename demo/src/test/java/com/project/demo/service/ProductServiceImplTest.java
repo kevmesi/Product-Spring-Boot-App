@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,6 +24,8 @@ class ProductServiceImplTest {
     ProductServiceImpl productService;
     @Mock
     ProductDAO productDao;
+    @Mock
+    CurrencyConverter currencyConverter;
 
     @Test
     void findAll_SuccessfulCall() {
@@ -114,23 +116,46 @@ class ProductServiceImplTest {
     @Test
     void save_addsNewProductSuccessfullyAndPopulatesPriceUSD() {
 
-        // Mock values
-        Product mockProduct = mock(Product.class);
-        BigDecimal mockPriceUSD = mock(BigDecimal.class);
+        // Product as it arrives from the request, without a USD price
+        Product product = new Product();
+        product.setCode("ABCD123456");
+        product.setPriceEUR(new BigDecimal("100.00"));
 
-        // Expected product values
-        Product expectedProduct = new Product();
-        expectedProduct.setPriceUSD((mockPriceUSD));
+        when(currencyConverter.convertEURtoUSD(new BigDecimal("100.00")))
+                .thenReturn(new BigDecimal("116.08"));
 
-        try (MockedStatic<CurrencyConverter> mockedStatic = mockStatic(CurrencyConverter.class, RETURNS_MOCKS)) {
-            mockedStatic.when(() -> CurrencyConverter.convertEURtoUSD(mockProduct.getPriceEUR()))
-                    .thenReturn(mockPriceUSD);
-            when(productDao.save(mockProduct)).thenReturn(expectedProduct);
+        // Asserting inside the stub proves the USD price is set before the product is persisted
+        when(productDao.save(any(Product.class))).thenAnswer(invocation -> {
+            Product productToSave = invocation.getArgument(0);
+            assertEquals(new BigDecimal("116.08"), productToSave.getPriceUSD());
+            return productToSave;
+        });
 
-            Product addedProduct = productService.save(mockProduct);
-            assertNotNull(addedProduct.getPriceUSD());
-            assertNotEquals(addedProduct.getPriceUSD(), mockProduct.getPriceUSD());
-        }
+        // Calling service method
+        Product savedProduct = productService.save(product);
+
+        // verifications
+        assertEquals(new BigDecimal("116.08"), savedProduct.getPriceUSD());
+        assertEquals(new BigDecimal("100.00"), savedProduct.getPriceEUR());
+        verify(currencyConverter, times(1)).convertEURtoUSD(new BigDecimal("100.00"));
+        verify(productDao, times(1)).save(product);
+
+    }
+
+    @Test
+    void save_PropagatesFailureFromCurrencyConverter() {
+
+        Product product = new Product();
+        product.setCode("ABCD123456");
+        product.setPriceEUR(new BigDecimal("100.00"));
+
+        when(currencyConverter.convertEURtoUSD(any(BigDecimal.class)))
+                .thenThrow(new IllegalStateException("HNB API returned no exchange rate for USD"));
+
+        assertThrows(IllegalStateException.class, () -> productService.save(product));
+
+        // Nothing should be persisted if the conversion fails
+        verify(productDao, never()).save(any(Product.class));
 
     }
 }

@@ -1,30 +1,44 @@
 package com.project.demo.share;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
 
+/**
+ * One row of the HNB exchange rate list. Rates are returned as strings using a comma
+ * as the decimal separator, so they are kept as String here and parsed where used.
+ */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CurrencyData {
 
-    @SerializedName("broj_tecajnice")
+    @JsonProperty("broj_tecajnice")
     private String exchangeRateCode;
-    @SerializedName("datum_primjene")
-    private Date dateFrom;
-    @SerializedName("drzava")
+
+    @JsonProperty("datum_primjene")
+    private LocalDate dateFrom;
+
+    @JsonProperty("drzava")
     private String country;
-    @SerializedName("drzava_iso")
+
+    @JsonProperty("drzava_iso")
     private String countryCode;
-    @SerializedName("kupovni_tecaj")
+
+    @JsonProperty("kupovni_tecaj")
     private String buyingRate;
-    @SerializedName("prodajni_tecaj")
+
+    @JsonProperty("prodajni_tecaj")
     private String sellingRate;
-    @SerializedName("sifra_valute")
+
+    @JsonProperty("sifra_valute")
     private String currencyCode;
-    @SerializedName("srednji_tecaj")
+
+    @JsonProperty("srednji_tecaj")
     private String averageRate;
-    @SerializedName("valuta")
+
+    @JsonProperty("valuta")
     private String currency;
 
 }
