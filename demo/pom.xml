@@ -113,9 +113,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<mainClass>com.project.demo.DemoApplication</mainClass>
-				</configuration>
 			</plugin>
 			<!-- Exposes dependency paths as properties, so the Mockito agent
 			     can be referenced by coordinates below -->
