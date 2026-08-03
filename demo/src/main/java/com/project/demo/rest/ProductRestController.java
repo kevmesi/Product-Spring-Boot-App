@@ -1,10 +1,10 @@
 package com.project.demo.rest;
 
 import com.project.demo.entity.Product;
+import com.project.demo.exceptionhandler.ProductNotFoundException;
 import com.project.demo.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -33,17 +33,16 @@ public class ProductRestController {
     }
 
     /**
-     * Returns product for given code
+     * Returns product for given code.
      * @param code unique 10-character code of the product
-     * @throws ResourceNotFoundException if there is no product for given code
      */
     @GetMapping("{code}")
-    public Product findProductByCode(@PathVariable String code) throws ResourceNotFoundException {
+    public Product findProductByCode(@PathVariable String code) {
 
         Product product = productService.findByCode(code);
 
         if (product == null){
-            throw new ResourceNotFoundException("Product not found, code: " + code);
+            throw new ProductNotFoundException("Product not found, code: " + code);
         }
         return product;
     }

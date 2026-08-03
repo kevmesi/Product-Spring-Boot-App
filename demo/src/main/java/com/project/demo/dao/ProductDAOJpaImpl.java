@@ -49,6 +49,6 @@ public class ProductDAOJpaImpl implements ProductDAO {
     @Transactional
     public Product save(Product product) {
         entityManager.persist(product);
-        return findByCode(product.getCode());
+        return product;
     }
 }

@@ -31,6 +31,7 @@ public interface ProductService {
      * Inserts a new product to the PRODUCT table.
      * Product should not have id set.
      * Product's price in USD is converted from EUR using the HNB API.
+     * <p>There is no error handling if the HNB API is down or slow.
      *
      * @param product product object to insert into the PRODUCT table
      * @return inserted product object

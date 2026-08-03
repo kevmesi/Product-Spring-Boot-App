@@ -5,13 +5,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name="product")
-@Data
+@Getter
+@Setter
 public class Product {
 
     @Id
@@ -21,7 +23,7 @@ public class Product {
 
     @Column(name="code", unique=true, nullable=false)
     @NotNull(message = "Code must not be null")
-    @Pattern(regexp="^[a-zA-Z0-9]{10}", message="Code must be exactly 10 characters long")
+    @Pattern(regexp="^[a-zA-Z0-9]{10}$", message="Code must be exactly 10 characters long")
     private String code;
 
     @Column(name="name")

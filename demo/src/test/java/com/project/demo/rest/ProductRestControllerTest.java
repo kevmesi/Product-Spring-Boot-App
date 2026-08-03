@@ -62,10 +62,6 @@ class ProductRestControllerTest {
     @Test
     void save_SuccessfulCall() throws Exception {
 
-        // Mocks
-        Product mockProduct = new Product();
-        when(mockService.save(any(Product.class))).thenReturn(mockProduct);
-
         String mockContent = """
                 {
                     "code": "firstcode1",
@@ -74,14 +70,13 @@ class ProductRestControllerTest {
                     "is_available": false
                 }""";
 
-        BindingResult mockResult = mock(BindingResult.class);
-        when(mockResult.hasErrors()).thenReturn(false);
-
         // Calling service
         mockMvc.perform(post("/api/products")
                         .content(mockContent)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
+
+        verify(mockService, times(1)).save(any(Product.class));
 
     }
 

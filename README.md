@@ -9,7 +9,7 @@ USD price is derived on creation from the daily exchange rate published by the
 |             |                                                  |
 |-------------|--------------------------------------------------|
 | Language    | Java 21                                          |
-| Build       | Maven (wrapper included)                         |
+| Build       | Maven                                            |
 | Framework   | Spring Boot 4.1.0, Spring MVC                    |
 | Persistence | Spring Data JPA / Hibernate                      |
 | Database    | PostgreSQL 16                                    |
@@ -17,7 +17,7 @@ USD price is derived on creation from the daily exchange rate published by the
 
 ## Prerequisites
 
-- **JDK 21 or newer** — `java -version`
+- **JDK 21 or newer**
 - **Docker** — used to run PostgreSQL locally
 - **Internet access** — creating a product calls the HNB API to convert EUR to USD
 
@@ -26,7 +26,7 @@ USD price is derived on creation from the daily exchange rate published by the
 ### 1. Clone
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/kevmesi/Product-Spring-Boot-App
 cd Product-Spring-Boot-App
 ```
 
@@ -57,11 +57,11 @@ cd demo
 
 On Windows use `mvnw.cmd spring-boot:run`.
 
-Info: If "Permission denied" error shows, run `chmod +x mvnw` in the `demo` directory.
+Info: If `Permission denied` error shows, run `chmod +x mvnw` in the `demo` directory.
 
 The service starts on <http://localhost:8080>.
 
-### 5. Stopping
+### 4. Stopping
 
 ```bash
 docker compose down          # stop Postgres, keep data
@@ -72,13 +72,14 @@ docker compose down -v       # stop Postgres and delete the data volume
 
 Settings live in `demo/src/main/resources/application.properties`.
 
-| Property                     | Default                                       |
-|------------------------------|-----------------------------------------------|
-| `spring.datasource.url`      | `jdbc:postgresql://localhost:5432/mydatabase` |
-| `spring.datasource.username` | `postgres`                                    |
-| `spring.datasource.password` | `user`                                        |
-| `hnb.api.url`                | `https://api.hnb.hr/tecajn-eur/v3`            |
-| `server.port`                | `8080`                                        |
+| Property                        | Default                                          |
+|---------------------------------|--------------------------------------------------|
+| `spring.datasource.url`         | `jdbc:postgresql://localhost:5432/mydatabase`    |
+| `spring.datasource.username`    | `postgres`                                       |
+| `spring.datasource.password`    | `user`                                           |
+| `hnb.api.url`                   | `https://api.hnb.hr/tecajn-eur/v3`               |
+| `spring.jpa.hibernate.ddl-auto` | `update`                                         |
+| `server.port`                   | `8080` (Spring Boot default, not set explicitly) |
 
 ## API
 
@@ -171,7 +172,5 @@ database nor internet access.
 
 ## Notes
 
-- The schema is created manually in step 3. A migration tool such as Flyway would be the
-  natural next step, so the schema is versioned alongside the code.
 - `price_usd` is calculated once at creation time using that day's HNB rate, and is not
   recalculated afterwards.

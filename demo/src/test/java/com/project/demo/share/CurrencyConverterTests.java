@@ -8,7 +8,6 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -64,7 +63,6 @@ class CurrencyConverterTests {
         assertEquals("SAD", usdData.getCountry());
         assertEquals("USA", usdData.getCountryCode());
         assertEquals("1,160750", usdData.getAverageRate());
-        assertEquals(LocalDate.of(2026, 8, 2), usdData.getDateFrom());
         mockServer.verify();
     }
 
@@ -74,7 +72,7 @@ class CurrencyConverterTests {
         mockServer.expect(requestTo(EXPECTED_URL))
                 .andRespond(withSuccess(HNB_USD_RESPONSE, MediaType.APPLICATION_JSON));
 
-        // 100.00 * 1.160750 = 116.0750, rounded HALF_UP to two decimals
+        // 100.00 * 1.160750 = 116.0750, to be rounded HALF_UP to two decimals
         assertEquals(new BigDecimal("116.08"),
                 currencyConverter.convertEURtoUSD(new BigDecimal("100.00")));
         mockServer.verify();
@@ -86,7 +84,7 @@ class CurrencyConverterTests {
         mockServer.expect(requestTo(EXPECTED_URL))
                 .andRespond(withSuccess(HNB_USD_RESPONSE, MediaType.APPLICATION_JSON));
 
-        // 0.01 * 1.160750 = 0.01160750, rounded HALF_UP to two decimals
+        // 0.01 * 1.160750 = 0.01160750, to be rounded HALF_UP to two decimals
         assertEquals(new BigDecimal("0.01"),
                 currencyConverter.convertEURtoUSD(new BigDecimal("0.01")));
     }

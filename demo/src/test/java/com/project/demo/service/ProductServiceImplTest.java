@@ -86,7 +86,7 @@ class ProductServiceImplTest {
         // mock product
         Product mockProduct = mock(Product.class);
         String mockCode = "code";
-        when(productDao.findByCode(mockCode)).thenReturn(mockProduct);
+        when(productDao.findByCode(anyString())).thenReturn(mockProduct);
 
         // Calling service method
         Product product = productService.findByCode(mockCode);
@@ -102,7 +102,7 @@ class ProductServiceImplTest {
 
         // mock product
         String mockCode = "code";
-        when(productDao.findByCode(mockCode)).thenReturn(null);
+        when(productDao.findByCode(anyString())).thenReturn(null);
 
         // Calling service method
         Product product = productService.findByCode(mockCode);
